@@ -1,0 +1,4 @@
+# Paste these in the terminal, using your tokens
+
+export BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN
+export ScrapingAntClient_token=YOUR_CLIENT_TOKEN
