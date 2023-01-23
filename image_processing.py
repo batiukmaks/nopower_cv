@@ -9,7 +9,7 @@ def process_image(filepath):
     original_image = cv2.imread(filepath, 0)
     detected_image = cv2.imread(filepath)
 
-    functions = [is_in_gpv_grid1, is_in_gpv_grid2]
+    functions = [is_in_gpv_grid1, is_in_gpv_grid2, is_in_gpv_grid3]
     for function in functions:
         detected_image = cv2.imread(filepath)
         contours = get_contours(original_image, function)
@@ -44,6 +44,11 @@ def is_in_gpv_grid1(contour, img_height):
 def is_in_gpv_grid2(contour, img_height):
     x, y, w, h = cv2.boundingRect(contour)
     return img_height - 30 > y > 120 and x > 150
+
+
+def is_in_gpv_grid3(contour, img_height):
+    x, y, w, h = cv2.boundingRect(contour)
+    return img_height - 30 > y > 140 and x > 150
 
 
 def get_gpv_matrix(contours, image):

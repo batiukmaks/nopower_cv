@@ -47,9 +47,10 @@ def use_previous_matrix():
 
     try:
         files = os.listdir(previous_filepath)
-        shutil.copytree(previous_filepath, current_filepath, )
+        shutil.rmtree(current_filepath)
+        shutil.copytree(previous_filepath, current_filepath)
     except:
         pass
-    
+
     with open(current_filepath + '/using_previous.txt', 'w') as file:
         file.write('This file is created to inform that current image on the website is invalid and/or we cannot create a valid matrix.')

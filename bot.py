@@ -67,6 +67,7 @@ async def already_chosen_group(update: Update, context: ContextTypes.DEFAULT_TYP
         await choose_group(update, context)
     else:
         await send_gpv_group_info(update, context.user_data["gpv_group"])
+        await show_menu(update, get_main_menu_chosen_group())
 
 
 async def send_gpv_group_info(update: Update, group: int):
@@ -77,6 +78,12 @@ async def send_gpv_group_info(update: Update, group: int):
             "🕑 Згідно з графіком, сьогодні у вас не буде світла в такі години:\n",
         ]
         + [f"📍 {start:02}:00 - {end:02}:00" for start, end in nopower]
+        + [
+            f"\n\n\n❗️ Можливі незначні відхилення відключень від графіку.",
+            f"❗️ В разі різкого збільшення навантаження на мережі, диспетчер зобов'язаний на це повпливати. Єдиний варіант -- аварійне відключення.",
+            f"❗️ Електроенергія може бути відсутня також і з інших причин, наприклад через аварійні або планові роботи в мережах.",
+            "🕑 Згідно з графіком, сьогодні у вас не буде світла в такі години:\n",
+        ]
     )
     await update.message.reply_photo(
         open(
@@ -111,7 +118,6 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await query.delete_message()
 
     if query.data in [
-        "/my_group",
         "to_main",
         "/help",
         "/start",
@@ -134,7 +140,7 @@ async def invalid_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if "is_report_active" in context.user_data and context.user_data["is_report_active"]:
         await report(update, context)
     else:
-        await update.message.reply_text("Для допомоги введіть /help")
+        await update.message.reply_text("🆘 Для допомоги введіть /help")
 
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -144,6 +150,7 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             f"/choose_group - Обрати групу відключень",
             f"/my_group - Показати ГПВ для останньої вибраної групи",
             f"/info - Інформація про бота",
+            f"/report - Повідомити про помилку",
             f"/help - Це меню",
         ]
     )
@@ -156,7 +163,7 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     if not context.user_data["is_report_active"]:
         context.user_data["is_report_active"] = True
-        await update.message.reply_text('Опишіть вашу проблему. \nЯкщо треба, прикріпіть фото/відео проблеми. \nВсе має бути описано в одному повідомленні.')
+        await update.message.reply_text('✏️ Опишіть вашу проблему. \n📷 Якщо треба, прикріпіть одне фото/відео проблеми. \n❗️ Все має бути описано в одному повідомленні.')
     else:
         context.user_data["is_report_active"] = False
         report_received = '\n'.join([
@@ -164,9 +171,15 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             f'Username: @{update.message.chat.username}',
             f'Name: {update.message.chat.full_name}',
         ])
-        await update.get_bot().send_message(chat_id=545190147, text=report_received)
-        await update.message.forward(chat_id=545190147)
-        await update.message.reply_text('Дякую за допомогу! Постараюсь виправити найближчим часом =)')
+        await update.get_bot().send_message(chat_id=-802449141, text=report_received)
+        await update.message.forward(chat_id=-802449141)
+        await update.message.reply_text('🙏 Дякую за допомогу! \n⚙️ Постараюсь виправити найближчим часом!')
+        menu = (
+            get_main_menu_chosen_group()
+            if "gpv_group" in context.user_data
+            else get_main_menu_not_chosen_group()
+        )
+        await show_menu(update, menu)
     
 
 def main() -> None:
