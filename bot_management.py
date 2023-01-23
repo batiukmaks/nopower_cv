@@ -5,6 +5,7 @@ from general import get_newest_folder
 from image_scrapping import scrape_image
 from image_processing import process_image
 
+
 def get_gpv_for_group(group):
     newest_folder = get_newest_folder(constants.website_url)
     using_previous_data_indicator = "/".join([newest_folder, 'using_previous.txt'])
@@ -43,3 +44,4 @@ def get_nopower_ranges(group_gpv):
             ranges.append([nopower[i]])
     ranges[-1].append((nopower[-1] + 1) % 24)
     return ranges
+    

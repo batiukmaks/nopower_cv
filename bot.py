@@ -7,20 +7,15 @@ from telegram.ext import (
     filters,
 )
 from telegram import InlineKeyboardMarkup, Update
-import os
 import constants
 from general import get_newest_folder
-from image_scrapping import scrape_image
-from image_processing import process_image
-
 from bot_management import get_nopower_ranges, get_gpv_for_group
 from menu import (
     get_choose_gpv_group_menu,
     get_main_menu_chosen_group,
     get_main_menu_not_chosen_group,
 )
-
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
+import config
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -183,7 +178,7 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
 
 def main() -> None:
-    application = Application.builder().token(BOT_TOKEN).build()
+    application = Application.builder().token(config.BOT_TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("my_group", already_chosen_group))

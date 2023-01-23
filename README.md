@@ -1,9 +1,7 @@
 # Power Interruption Informant Telegram Bot
 
-
-
 ## Usage
-1. Export tokens in the project folder (check `set_tokens.txt`)
+1. Paste your Telegram token in the file `config.py`
 2. python3 bot.py
 
 ### Resourses: 
