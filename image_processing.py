@@ -8,15 +8,10 @@ import constants
 def process_image(filepath):
     original_image = cv2.imread(filepath, 0)
     detected_image = cv2.imread(filepath)
-
-    functions = [is_in_gpv_grid1, is_in_gpv_grid2, is_in_gpv_grid3]
-    for function in functions:
-        detected_image = cv2.imread(filepath)
-        contours = get_contours(original_image, function)
-        matrix = get_gpv_matrix(contours, detected_image)
-        is_matrix_valid = not any('u' in row for row in matrix)
-        if is_matrix_valid:
-            break
+    
+    contours = get_contours(original_image)
+    matrix = get_gpv_matrix(contours, detected_image)
+    is_matrix_valid = not any('u' in row for row in matrix)
     if not is_matrix_valid:
         use_previous_matrix()
         raise BufferError
@@ -25,35 +20,20 @@ def process_image(filepath):
         save_detected_image(detected_image, filepath)
 
 
-def get_contours(image, filter_function):
+def get_contours(image):
     ret, thresh_value = cv2.threshold(image, 100, 255, cv2.THRESH_BINARY_INV)
     kernel = np.ones((5, 5), np.uint8)
     dilated_value = cv2.dilate(thresh_value, kernel, iterations=1)
     contours, hierarchy = cv2.findContours(
         dilated_value, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
     )
-    contours = list(filter(lambda seq: filter_function(seq, image.shape[0]), contours))
     return contours
-
-
-def is_in_gpv_grid1(contour, img_height):
-    x, y, w, h = cv2.boundingRect(contour)
-    return img_height - 30 > y > 50 and x > 150
-
-
-def is_in_gpv_grid2(contour, img_height):
-    x, y, w, h = cv2.boundingRect(contour)
-    return img_height - 30 > y > 120 and x > 150
-
-
-def is_in_gpv_grid3(contour, img_height):
-    x, y, w, h = cv2.boundingRect(contour)
-    return img_height - 30 > y > 140 and x > 150
 
 
 def get_gpv_matrix(contours, image):
     matrix = [["u"] * constants.HOURS for i in range(constants.GROUPS)]
-    for i, cnt in enumerate(contours):
+    i = 0
+    for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
         cropped = image[y : y + h, x : x + w]
         color = (
@@ -63,10 +43,12 @@ def get_gpv_matrix(contours, image):
             if is_red(list(cropped[0][0]))
             else "u"
         )
-        matrix[constants.GROUPS - (i // constants.HOURS) - 1][
-            constants.HOURS - (i % constants.HOURS) - 1
-        ] = color
-        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 1)
+        if color != 'u':
+            matrix[constants.GROUPS - (i // constants.HOURS) - 1][
+                constants.HOURS - (i % constants.HOURS) - 1
+            ] = color
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 1)
+            i += 1
     return matrix
 
 
