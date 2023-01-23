@@ -1,8 +1,7 @@
 import cv2
 import numpy as np
-# import matplotlib.pyplot as plt
 import csv
-from general import get_newest_folder
+from general import get_newest_folder, use_previous_matrix
 import constants
 
 
@@ -19,10 +18,11 @@ def process_image(filepath):
         if is_matrix_valid:
             break
     if not is_matrix_valid:
+        use_previous_matrix()
         raise BufferError
-        
-    save_gpv_matrix(matrix, filepath)
-    save_detected_image(detected_image, filepath)
+    else:
+        save_gpv_matrix(matrix, filepath)
+        save_detected_image(detected_image, filepath)
 
 
 def get_contours(image, filter_function):
@@ -37,13 +37,11 @@ def get_contours(image, filter_function):
 
 
 def is_in_gpv_grid1(contour, img_height):
-    # print('in 1')
     x, y, w, h = cv2.boundingRect(contour)
     return img_height - 30 > y > 50 and x > 150
 
 
 def is_in_gpv_grid2(contour, img_height):
-    # print('in 2')
     x, y, w, h = cv2.boundingRect(contour)
     return img_height - 30 > y > 120 and x > 150
 
@@ -82,7 +80,6 @@ def save_gpv_matrix(matrix, filepath):
 
 
 def save_detected_image(detected_image, filepath):
-    # plt.imshow(detected_image)
     cv2.imwrite(
         filepath[: filepath.rindex("/") + 1] + "detected_table_image.jpg",
         detected_image,

@@ -7,8 +7,13 @@ from image_processing import process_image
 
 def get_gpv_for_group(group):
     newest_folder = get_newest_folder(constants.website_url)
+    using_previous_data_indicator = "/".join([newest_folder, 'using_previous.txt'])
+    is_current_uses_previous_data = os.path.exists(using_previous_data_indicator)
+
     path = "/".join([newest_folder, constants.gpv_table])
-    if not os.path.exists(path):
+    if is_current_uses_previous_data:
+        os.remove(using_previous_data_indicator)
+    if not os.path.exists(path) or is_current_uses_previous_data:
         scrape_image(
             constants.website_url, newest_folder, constants.website_image_filename
         )

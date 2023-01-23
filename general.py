@@ -1,4 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+import os
+import shutil
 import pytz
 import constants
 
@@ -30,3 +32,20 @@ def get_last_updated_time(url) -> str:
     hour, minute = [int(s) for s in now.strftime("%H %M").split()]
     minute = 0 if minute < 30 else 30
     return f"{hour:02}{minute:02}"
+
+
+def use_previous_matrix():
+    current_filepath = get_newest_folder(constants.website_url)
+
+    previous_date = current_date = datetime.strptime(' '.join(current_filepath.split('/')[-2:]), '%d%m%Y %H%M')
+    previous_filepath = ''
+    while True:
+        previous_date = current_date - timedelta(minutes=30)
+        previous_filepath = '/'.join([constants.general_folder, previous_date.strftime('%d%m%Y/%H%M')])
+        if os.path.exists(previous_filepath):
+            break
+    files = os.listdir(previous_filepath)
+    shutil.copytree(previous_filepath, current_filepath)
+
+    with open(current_filepath + '/using_previous.txt', 'w') as file:
+        file.write('This file is created to inform that current image on the website is invalid and/or we cannot create a valid matrix.')

@@ -15,7 +15,7 @@ def get_choose_gpv_group_menu():
                 for j in range(1, cgm_cols + 1)
             ]
             for i in range(cgm_rows)
-        ] + [[InlineKeyboardButton("Back", callback_data="to_main")]],
+        ] + [[InlineKeyboardButton("Назад", callback_data="to_main")]],
         "text": "\n".join(
             [
                 "⚡️ Обери групу відключень ⚡️\n",
@@ -31,14 +31,17 @@ def get_main_menu_not_chosen_group():
     main_menu_not_chosen_group = {
         "menu": [
             [
-                InlineKeyboardButton("Choose Group", callback_data="/choose_group"),
+                InlineKeyboardButton("Обрати групу", callback_data="/choose_group"),
             ],
             [
-                InlineKeyboardButton("Help", callback_data="/help"),
-                InlineKeyboardButton("About bot", callback_data="/info"),
+                InlineKeyboardButton("Допомога", callback_data="/help"),
+                InlineKeyboardButton("Про бота", callback_data="/info"),
+            ],
+            [
+                InlineKeyboardButton("Повідомити про помилку", callback_data="/report"),
             ],
         ],
-        "text": "🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦",
+        "text": "🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦",
     }
     return main_menu_not_chosen_group
 
@@ -46,6 +49,6 @@ def get_main_menu_not_chosen_group():
 def get_main_menu_chosen_group():
     main_menu_chosen_group = get_main_menu_not_chosen_group()
     main_menu_chosen_group["menu"][0].insert(
-        0, InlineKeyboardButton("My Group", callback_data="/my_group")
+        0, InlineKeyboardButton("Моя група", callback_data="/my_group")
     )
     return main_menu_chosen_group

@@ -10,7 +10,7 @@ def scrape_image(url, path, filename):
         os.mkdir(date_folder_path)
     if not os.path.exists(path):
         os.mkdir(path)
-        scrape_gpv_image(url + filename, "/".join([path, constants.local_image]))
+    scrape_gpv_image(url + filename, "/".join([path, constants.local_image]))
 
 
 def scrape_gpv_image(url, filepath):

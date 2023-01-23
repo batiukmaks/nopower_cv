@@ -106,6 +106,8 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await help(query, context)
     elif query.data == "/info":
         await info(query, context)
+    elif query.data == "/report":
+        await report(query, context)
     await query.delete_message()
 
     if query.data in [
@@ -129,7 +131,10 @@ async def show_menu(update: Update, menu):
 
 
 async def invalid_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("Для допомоги введіть /help")
+    if "is_report_active" in context.user_data and context.user_data["is_report_active"]:
+        await report(update, context)
+    else:
+        await update.message.reply_text("Для допомоги введіть /help")
 
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -145,6 +150,25 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(text)
 
 
+async def report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if "is_report_active" not in context.user_data:
+        context.user_data["is_report_active"] = False
+
+    if not context.user_data["is_report_active"]:
+        context.user_data["is_report_active"] = True
+        await update.message.reply_text('Опишіть вашу проблему. \nЯкщо треба, прикріпіть фото/відео проблеми. \nВсе має бути описано в одному повідомленні.')
+    else:
+        context.user_data["is_report_active"] = False
+        report_received = '\n'.join([
+            f'chat_id: {update.message.chat_id}',
+            f'Username: @{update.message.chat.username}',
+            f'Name: {update.message.chat.full_name}',
+        ])
+        await update.get_bot().send_message(chat_id=545190147, text=report_received)
+        await update.message.forward(chat_id=545190147)
+        await update.message.reply_text('Дякую за допомогу! Постараюсь виправити найближчим часом =)')
+    
+
 def main() -> None:
     application = Application.builder().token(BOT_TOKEN).build()
 
@@ -153,9 +177,10 @@ def main() -> None:
     application.add_handler(CommandHandler("choose_group", choose_group))
     application.add_handler(CommandHandler("help", help))
     application.add_handler(CommandHandler("info", info))
+    application.add_handler(CommandHandler("report", report))
     application.add_handler(CallbackQueryHandler(menu))
     application.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, invalid_messages)
+        MessageHandler(~filters.COMMAND, invalid_messages)
     )
 
     application.run_polling()
