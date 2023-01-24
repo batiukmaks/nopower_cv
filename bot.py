@@ -1,3 +1,4 @@
+from telegram import InlineKeyboardMarkup, Update, Bot
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -6,21 +7,74 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
-from telegram import InlineKeyboardMarkup, Update
 import constants
 from general import get_newest_folder
-from bot_management import get_nopower_ranges, get_gpv_for_group
+from bot_management import get_gpv_nopower_ranges, get_group_gpv
 from menu import (
     get_choose_gpv_group_menu,
     get_main_menu_chosen_group,
-    get_main_menu_not_chosen_group,
+    get_main_menu
 )
 import config
 from keep_alive import keep_alive
 
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Sends a message with three inline buttons attached."""
+# Check version
+from telegram import __version__ as TG_VER
+
+try:
+    from telegram import __version_info__
+except ImportError:
+    __version_info__ = (0, 0, 0, 0, 0)  # type: ignore[assignment]
+
+if __version_info__ < (20, 0, 0, "alpha", 1):
+    raise RuntimeError(
+        f"This example is not compatible with your current PTB version {TG_VER}. To view the "
+        f"{TG_VER} version of this example, "
+        f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
+    )
+
+
+# Enable logging
+import logging
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+
+# Enable error handling
+import html, traceback, json
+from telegram.constants import ParseMode
+
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Log the error and send a telegram message to notify the developer."""
+    logger.error(msg="Exception while handling an update:", exc_info=context.error)
+
+    tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
+    tb_string = "".join(tb_list)
+
+    update_str = update.to_dict() if isinstance(update, Update) else str(update)
+    message = (
+        f"An exception was raised while handling an update\n"
+        f"<pre>update = {html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}"
+        "</pre>\n\n"
+        f"<pre>context.chat_data = {html.escape(str(context.chat_data))}</pre>\n\n"
+        f"<pre>context.user_data = {html.escape(str(context.user_data))}</pre>\n\n"
+        f"<pre>{html.escape(tb_string)}</pre>"
+    )
+    await context.bot.send_message(
+        chat_id=config.DEVELOPER_CHAT_ID, text=message, parse_mode=ParseMode.HTML
+    )
+
+
+async def show_menu(update: Update, menu):
+    await update.message.reply_text(
+        text=menu["text"], reply_markup=InlineKeyboardMarkup(menu["menu"])
+    )
+
+
+async def send_welcome_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         "\n".join(
             [
@@ -30,10 +84,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             ]
         ),
     )
-    await info(update, context)
+    await send_bot_info(update, context)
 
 
-async def info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def send_bot_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text = "\n".join(
         [
             f"😡 Через дії російських окупантів пошкоджені електростанції України",
@@ -50,24 +104,37 @@ async def info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         ]
     )
     await update.message.reply_text(text)
-    menu = (
-        get_main_menu_chosen_group()
-        if "gpv_group" in context.user_data
-        else get_main_menu_not_chosen_group()
+    await show_menu(update, get_main_menu(context))
+
+
+async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    text = "\n".join(
+        [
+            f"/start - Почати роботу бота",
+            f"/choose_group - Обрати групу відключень",
+            f"/my_group - Показати ГПВ для останньої вибраної групи",
+            f"/info - Інформація про бота",
+            f"/report - Повідомити про помилку",
+            f"/help - Це меню",
+        ]
     )
-    await show_menu(update, menu)
+    await update.message.reply_text(text)
 
 
-async def already_chosen_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if "gpv_group" not in context.user_data:
-        await choose_group(update, context)
-    else:
+async def choose_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await show_menu(update, get_choose_gpv_group_menu())
+
+
+async def send_my_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
         await send_gpv_group_info(update, context.user_data["gpv_group"])
         await show_menu(update, get_main_menu_chosen_group())
+    except KeyError:
+        await choose_group(update, context)
 
 
 async def send_gpv_group_info(update: Update, group: int):
-    nopower = get_nopower_ranges(get_gpv_for_group(group))
+    nopower = get_gpv_nopower_ranges(get_group_gpv(group))
     text = "\n".join(
         [
             f"💡 Ви обрали групу №{group}",
@@ -88,77 +155,18 @@ async def send_gpv_group_info(update: Update, group: int):
     )
 
 
-async def choose_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    menu = get_choose_gpv_group_menu()
-    await show_menu(update, menu)
-
-
-async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Parses the CallbackQuery and updates the message text."""
-    query = update.callback_query
-
-    if query.data == "/choose_group":
-        await choose_group(query, context)
-    elif query.data == "/my_group":
-        await already_chosen_group(query, context)
-    elif query.data.startswith("gpv_group_choice_"):
-        context.user_data["gpv_group"] = int(query.data[query.data.rindex("_") + 1 :])
-        await send_gpv_group_info(query, context.user_data["gpv_group"])
-    elif query.data == "/help":
-        await help(query, context)
-    elif query.data == "/info":
-        await info(query, context)
-    elif query.data == "/report":
-        await report(query, context)
-    await query.delete_message()
-
-    if query.data in [
-        "to_main",
-        "/help",
-        "/start",
-    ] or query.data.startswith("gpv_group_choice_"):
-        menu = (
-            get_main_menu_chosen_group()
-            if "gpv_group" in context.user_data
-            else get_main_menu_not_chosen_group()
-        )
-        await show_menu(query, menu)
-
-
-async def show_menu(update: Update, menu):
-    await update.message.reply_text(
-        text=menu["text"], reply_markup=InlineKeyboardMarkup(menu["menu"])
-    )
-
-
-async def invalid_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if "is_report_active" in context.user_data and context.user_data["is_report_active"]:
-        await report(update, context)
-    else:
-        await update.message.reply_text("🆘 Для допомоги введіть /help")
-
-
-async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    text = "\n".join(
-        [
-            f"/start - Почати роботу бота",
-            f"/choose_group - Обрати групу відключень",
-            f"/my_group - Показати ГПВ для останньої вибраної групи",
-            f"/info - Інформація про бота",
-            f"/report - Повідомити про помилку",
-            f"/help - Це меню",
-        ]
-    )
-    await update.message.reply_text(text)
-
-
 async def report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if "is_report_active" not in context.user_data:
         context.user_data["is_report_active"] = False
 
     if not context.user_data["is_report_active"]:
         context.user_data["is_report_active"] = True
-        await update.message.reply_text('✏️ Опишіть вашу проблему. \n📷 Якщо треба, прикріпіть одне фото/відео проблеми. \n❗️ Все має бути описано в одному повідомленні.')
+        text = '\n'.join([
+            f'✏️ Опишіть вашу проблему.',
+            f'📷 Якщо треба, прикріпіть одне фото/відео проблеми.',
+            f'❗️ Все має бути описано в одному повідомленні.',
+        ])
+        await update.message.reply_text(text)
     else:
         context.user_data["is_report_active"] = False
         report_received = '\n'.join([
@@ -166,30 +174,68 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             f'Username: @{update.message.chat.username}',
             f'Name: {update.message.chat.full_name}',
         ])
-        await update.get_bot().send_message(chat_id=-802449141, text=report_received)
-        await update.message.forward(chat_id=-802449141)
-        await update.message.reply_text('🙏 Дякую за допомогу! \n⚙️ Постараюсь виправити найближчим часом!')
-        menu = (
-            get_main_menu_chosen_group()
-            if "gpv_group" in context.user_data
-            else get_main_menu_not_chosen_group()
-        )
-        await show_menu(update, menu)
-    
+        thank = '\n'.join([
+            f'🙏 Дякую за допомогу!',
+            f'⚙️ Постараюсь виправити найближчим часом!',
+        ])
+        await send_message_to_admin(context.bot, report_received)
+        await update.message.forward(chat_id=config.ADMIN_CHAT_ID)
+        await update.message.reply_text(thank)
+        await show_menu(update, get_main_menu(context))
+
+
+async def send_message_to_admin(bot: Bot, text):
+    await bot.send_message(chat_id=config.ADMIN_CHAT_ID, text=text)
+
+
+async def not_commands_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if "is_report_active" in context.user_data and context.user_data["is_report_active"]:
+        await report(update, context)
+    else:
+        await update.message.reply_text("🆘 Для допомоги введіть /help")
+
+
+async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+
+    if query.data == "/choose_group":
+        await choose_group(query, context)
+    elif query.data == "/my_group":
+        await send_my_group(query, context)
+    elif query.data.startswith("gpv_group_choice_"):
+        context.user_data["gpv_group"] = int(query.data[query.data.rindex("_") + 1 :])
+        await send_gpv_group_info(query, context.user_data["gpv_group"])
+    elif query.data == "/help":
+        await help(query, context)
+    elif query.data == "/info":
+        await send_bot_info(query, context)
+    elif query.data == "/report":
+        await report(query, context)
+    await query.delete_message()
+
+    if query.data in [
+        "/start",
+        "to_main",
+        "/help",
+    ] or query.data.startswith("gpv_group_choice_"):
+        await show_menu(query, get_main_menu(context))
+
 
 def main() -> None:
     application = Application.builder().token(config.BOT_TOKEN).build()
 
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("my_group", already_chosen_group))
+    application.add_handler(CommandHandler("start", send_welcome_message))
+    application.add_handler(CommandHandler("my_group", send_my_group))
     application.add_handler(CommandHandler("choose_group", choose_group))
     application.add_handler(CommandHandler("help", help))
-    application.add_handler(CommandHandler("info", info))
+    application.add_handler(CommandHandler("info", send_bot_info))
     application.add_handler(CommandHandler("report", report))
-    application.add_handler(CallbackQueryHandler(menu))
+    application.add_handler(CallbackQueryHandler(callback_handler))
     application.add_handler(
-        MessageHandler(~filters.COMMAND, invalid_messages)
+        MessageHandler(~filters.COMMAND, not_commands_handler)
     )
+
+    application.add_error_handler(error_handler)
 
     application.run_polling()
 

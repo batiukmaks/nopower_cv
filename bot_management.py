@@ -6,7 +6,7 @@ from image_scrapping import scrape_image
 from image_processing import process_image
 
 
-def get_gpv_for_group(group):
+def get_group_gpv(group):
     newest_folder = get_newest_folder(constants.website_url)
     using_previous_data_indicator = "/".join([newest_folder, 'using_previous.txt'])
     is_current_uses_previous_data = os.path.exists(using_previous_data_indicator)
@@ -25,7 +25,7 @@ def get_gpv_for_group(group):
         return [row for i, row in enumerate(reader) if i == int(group) - 1][0]
 
 
-def get_nopower_ranges(group_gpv):
+def get_gpv_nopower_ranges(group_gpv):
     nopower = sorted(
         [
             x[1]

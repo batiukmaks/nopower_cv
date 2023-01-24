@@ -1,4 +1,5 @@
 from telegram import InlineKeyboardButton
+from telegram.ext import ContextTypes
 import constants
 
 
@@ -52,3 +53,12 @@ def get_main_menu_chosen_group():
         0, InlineKeyboardButton("Моя група", callback_data="/my_group")
     )
     return main_menu_chosen_group
+
+
+def get_main_menu(context: ContextTypes.DEFAULT_TYPE):
+    return (
+        get_main_menu_chosen_group()
+        if "gpv_group" in context.user_data
+        else get_main_menu_not_chosen_group()
+    )
+    

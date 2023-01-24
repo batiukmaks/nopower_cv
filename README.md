@@ -12,3 +12,6 @@
 #### Image Scrapping From Website
 - https://stackoverflow.com/a/8286449
 - https://scrapingant.com/blog/scrape-dynamic-website-with-python#web-scraping-api
+
+### Other:
+- https://github.com/python-telegram-bot/python-telegram-bot/blob/master/examples/errorhandlerbot.py
