@@ -16,6 +16,7 @@ from menu import (
     get_main_menu_not_chosen_group,
 )
 import config
+from keep_alive import keep_alive
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -195,4 +196,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    keep_alive()
     main()
