@@ -1,5 +1,6 @@
 from telegram import InlineKeyboardMarkup, Update, Bot
 from telegram.ext import (
+    Updater,
     Application,
     CallbackQueryHandler,
     CommandHandler,
@@ -16,7 +17,8 @@ from menu import (
     get_main_menu
 )
 import config
-from keep_alive import keep_alive
+import os
+PORT = int(os.environ.get('PORT', 5000))
 
 
 # Check version
@@ -222,24 +224,45 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 
 def main() -> None:
-    application = Application.builder().token(config.BOT_TOKEN).build()
+    # application = Application.builder().token(config.BOT_TOKEN).build()
 
-    application.add_handler(CommandHandler("start", send_welcome_message))
-    application.add_handler(CommandHandler("my_group", send_my_group))
-    application.add_handler(CommandHandler("choose_group", choose_group))
-    application.add_handler(CommandHandler("help", help))
-    application.add_handler(CommandHandler("info", send_bot_info))
-    application.add_handler(CommandHandler("report", report))
-    application.add_handler(CallbackQueryHandler(callback_handler))
-    application.add_handler(
+    # application.add_handler(CommandHandler("start", send_welcome_message))
+    # application.add_handler(CommandHandler("my_group", send_my_group))
+    # application.add_handler(CommandHandler("choose_group", choose_group))
+    # application.add_handler(CommandHandler("help", help))
+    # application.add_handler(CommandHandler("info", send_bot_info))
+    # application.add_handler(CommandHandler("report", report))
+    # application.add_handler(CallbackQueryHandler(callback_handler))
+    # application.add_handler(
+    #     MessageHandler(~filters.COMMAND, not_commands_handler)
+    # )
+    # application.add_error_handler(error_handler)
+
+    # application.run_polling()
+
+    updater = Updater(config.BOT_TOKEN, use_context=True)
+    dp = updater.dispatcher
+    dp.add_handler(CommandHandler("start", send_welcome_message))
+    dp.add_handler(CommandHandler("my_group", send_my_group))
+    dp.add_handler(CommandHandler("choose_group", choose_group))
+    dp.add_handler(CommandHandler("help", help))
+    dp.add_handler(CommandHandler("info", send_bot_info))
+    dp.add_handler(CommandHandler("report", report))
+    dp.add_handler(CallbackQueryHandler(callback_handler))
+    dp.add_handler(
         MessageHandler(~filters.COMMAND, not_commands_handler)
     )
+    dp.add_error_handler(error_handler)
 
-    application.add_error_handler(error_handler)
+    updater.start_webhook(
+        listen="0.0.0.0",
+        port=int(PORT),
+        url_path=config.BOT_TOKEN,
+        webhook_url=config.WEBHOOK_URL + config.BOT_TOKEN
+    )
 
-    application.run_polling()
+    updater.idle()
 
 
 if __name__ == "__main__":
-    keep_alive()
     main()
