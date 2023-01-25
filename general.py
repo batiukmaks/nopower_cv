@@ -44,6 +44,7 @@ def use_previous_matrix():
         previous_filepath = '/'.join([constants.general_folder, previous_date.strftime('%d%m%Y/%H%M')])
         if os.path.exists(previous_filepath):
             break
+        current_date = previous_date
 
     try:
         files = os.listdir(previous_filepath)
