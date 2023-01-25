@@ -72,7 +72,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
 async def show_menu(update: Update, menu):
     await update.message.reply_text(
-        text=menu["text"], reply_markup=InlineKeyboardMarkup(menu["menu"])
+        text=menu["text"], reply_markup=InlineKeyboardMarkup(menu["menu"]), parse_mode=ParseMode.HTML, disable_web_page_preview=True
     )
 
 
@@ -86,6 +86,14 @@ async def send_welcome_message(update: Update, context: ContextTypes.DEFAULT_TYP
             ]
         ),
     )
+    message_to_pin = await update.message.reply_text(
+        "\n".join([
+            f"\n\n\n❗️ Можливі незначні відхилення відключень від графіку.",
+            f"❗️ В разі різкого збільшення навантаження на мережі, диспетчер зобов'язаний на це повпливати. Єдиний варіант -- аварійне відключення.",
+            f"❗️ Електроенергія може бути відсутня також і з інших причин, наприклад через аварійні або планові роботи в мережах.",
+        ]),
+    )
+    await message_to_pin.pin()
     await send_bot_info(update, context)
 
 
@@ -112,6 +120,8 @@ async def send_bot_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text = "\n".join(
         [
+            f"💠 Дозволені команди 💠",
+            "",
             f"/start - Почати роботу бота",
             f"/choose_group - Обрати групу відключень",
             f"/my_group - Показати ГПВ для останньої вибраної групи",
@@ -140,20 +150,16 @@ async def send_gpv_group_info(update: Update, group: int):
     text = "\n".join(
         [
             f"💡 Ви обрали групу №{group}",
-            "🕑 Згідно з графіком, сьогодні у вас не буде світла в такі години:\n",
+            "🕑 Згідно з <a href='https://oblenergo.cv.ua/shutdowns/'>графіком</a>, сьогодні у вас не буде світла в такі години:\n",
         ]
         + [f"📍 {start:02}:00 - {end:02}:00" for start, end in nopower]
-        + [
-            f"\n\n\n❗️ Можливі незначні відхилення відключень від графіку.",
-            f"❗️ В разі різкого збільшення навантаження на мережі, диспетчер зобов'язаний на це повпливати. Єдиний варіант -- аварійне відключення.",
-            f"❗️ Електроенергія може бути відсутня також і з інших причин, наприклад через аварійні або планові роботи в мережах.",
-        ]
     )
     await update.message.reply_photo(
         open(
             get_newest_folder(constants.website_url) + "/" + constants.local_image, "rb"
         ),
         caption=text,
+        parse_mode=ParseMode.HTML
     )
 
 
@@ -193,8 +199,9 @@ async def send_message_to_admin(bot: Bot, text):
 async def not_commands_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if "is_report_active" in context.user_data and context.user_data["is_report_active"]:
         await report(update, context)
-    else:
+    elif not update.message.pinned_message:
         await update.message.reply_text("🆘 Для допомоги введіть /help")
+        
 
 
 async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -246,13 +253,6 @@ def main() -> None:
         url_path=config.BOT_TOKEN,
         webhook_url=config.WEBHOOK_URL + config.BOT_TOKEN
     )
-
-    # application.updater.start_webhook(
-    #     listen="0.0.0.0",
-    #     port=int(PORT),
-    #     url_path=config.BOT_TOKEN,
-    #     webhook_url=config.WEBHOOK_URL + config.BOT_TOKEN
-    # )
 
 
 if __name__ == "__main__":
