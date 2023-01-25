@@ -14,7 +14,6 @@ def process_image(filepath):
     is_matrix_valid = not any('u' in row for row in matrix)
     if not is_matrix_valid:
         use_previous_matrix()
-        raise BufferError
     else:
         save_gpv_matrix(matrix, filepath)
         save_detected_image(detected_image, filepath)
@@ -49,6 +48,8 @@ def get_gpv_matrix(contours, image):
             ] = color
             cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 1)
             i += 1
+        if i == constants.GROUPS * constants.HOURS:
+            break
     return matrix
 
 

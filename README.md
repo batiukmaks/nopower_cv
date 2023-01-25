@@ -13,5 +13,8 @@
 - https://stackoverflow.com/a/8286449
 - https://scrapingant.com/blog/scrape-dynamic-website-with-python#web-scraping-api
 
-### Other:
+#### Heroku:
+- https://towardsdatascience.com/how-to-deploy-a-telegram-bot-using-heroku-for-free-9436f89575d2
+
+#### Other:
 - https://github.com/python-telegram-bot/python-telegram-bot/blob/master/examples/errorhandlerbot.py
