@@ -240,7 +240,7 @@ def main() -> None:
 
     # application.run_polling()
 
-    updater = Updater(config.BOT_TOKEN, use_context=True)
+    updater = Updater(config.BOT_TOKEN)
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("start", send_welcome_message))
     dp.add_handler(CommandHandler("my_group", send_my_group))
