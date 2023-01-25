@@ -21,7 +21,7 @@ def process_image(filepath):
 
 def get_contours(image):
     ret, thresh_value = cv2.threshold(image, 100, 255, cv2.THRESH_BINARY_INV)
-    kernel = np.ones((5, 5), np.uint8)
+    kernel = np.ones((3, 3), np.uint8)
     dilated_value = cv2.dilate(thresh_value, kernel, iterations=1)
     contours, hierarchy = cv2.findContours(
         dilated_value, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
