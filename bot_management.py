@@ -26,6 +26,7 @@ def get_group_gpv(group):
 
 
 def get_gpv_nopower_ranges(group_gpv):
+    group_gpv = group_gpv[-24:]
     nopower = sorted(
         [
             x[1]

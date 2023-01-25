@@ -12,16 +12,18 @@ def process_image(filepath):
     contours = get_contours(original_image)
     matrix = get_gpv_matrix(contours, detected_image)
     is_matrix_valid = not any('u' in row for row in matrix)
+    save_detected_image(detected_image, filepath)
     if not is_matrix_valid:
         use_previous_matrix()
+        return False
     else:
         save_gpv_matrix(matrix, filepath)
-        save_detected_image(detected_image, filepath)
+        return True
 
 
 def get_contours(image):
-    ret, thresh_value = cv2.threshold(image, 100, 255, cv2.THRESH_BINARY_INV)
-    kernel = np.ones((3, 3), np.uint8)
+    ret, thresh_value = cv2.threshold(image, 110, 255, cv2.THRESH_BINARY_INV)
+    kernel = np.ones((5,5), np.uint8)
     dilated_value = cv2.dilate(thresh_value, kernel, iterations=1)
     contours, hierarchy = cv2.findContours(
         dilated_value, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
@@ -29,12 +31,24 @@ def get_contours(image):
     return contours
 
 
+def compare_contours_for_sort(contour):
+    x, y, w, h = cv2.boundingRect(contour)
+    return (-(y+h), -(x+w))
+    
+
+def filter_contours(contour):
+    x, y, w, h = cv2.boundingRect(contour)
+    return w <= 8 and h <= 8
+
+
 def get_gpv_matrix(contours, image):
-    matrix = [["u"] * constants.HOURS for i in range(constants.GROUPS)]
+    contours = sorted(list(contours), key=compare_contours_for_sort)
+    contours = list(filter(filter_contours, contours))
+    matrix = [["u"] * (constants.HOURS + 3) for i in range(constants.GROUPS)]
     i = 0
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
-        cropped = image[y : y + h, x : x + w]
+        cropped = image[y : y + 8, x : x + 8]
         color = (
             "g"
             if is_green(list(cropped[0][0]))
@@ -43,12 +57,12 @@ def get_gpv_matrix(contours, image):
             else "u"
         )
         if color != 'u':
-            matrix[constants.GROUPS - (i // constants.HOURS) - 1][
-                constants.HOURS - (i % constants.HOURS) - 1
+            matrix[constants.GROUPS - (i // (constants.HOURS + 3)) - 1][
+                (constants.HOURS + 3) - (i % (constants.HOURS + 3)) - 1
             ] = color
             cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 1)
             i += 1
-        if i == constants.GROUPS * constants.HOURS:
+        if i == constants.GROUPS * (constants.HOURS + 3):
             break
     return matrix
 
@@ -78,4 +92,5 @@ if __name__ == "__main__":
     filepath = "/".join(
         [get_newest_folder(constants.website_url), constants.local_image]
     )
-    process_image(filepath)
+    # process_image(filepath)
+    process_image('tests/original.png')

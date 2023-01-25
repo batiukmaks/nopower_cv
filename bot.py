@@ -154,6 +154,15 @@ async def send_gpv_group_info(update: Update, group: int):
         ]
         + [f"📍 {start:02}:00 - {end:02}:00" for start, end in nopower]
     )
+    if os.path.exists(get_newest_folder(constants.website_url) + "/using_previous.txt"):
+        text += "\n\n❗️ Бот не зміг відсканувати фото, тому використав попередні дані. Згодом все буде працювати, дякую за довіру ❤️"
+        message = await update.get_bot().send_photo(
+            chat_id=config.DEVELOPER_CHAT_ID,
+            photo=open(
+                get_newest_folder(constants.website_url) + "/unable_to_process/detected_table_image.jpg"
+            ),
+        )
+        await message.pin()
     await update.message.reply_photo(
         open(
             get_newest_folder(constants.website_url) + "/" + constants.local_image, "rb"

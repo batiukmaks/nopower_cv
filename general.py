@@ -47,7 +47,13 @@ def use_previous_matrix():
         current_date = previous_date
 
     try:
+        invalid_data_path = current_filepath + "/unable_to_process"
         files = os.listdir(previous_filepath)
+        if not os.path.exists(invalid_data_path):
+            os.mkdir(invalid_data_path)
+        else:
+            shutil.rmtree(invalid_data_path)
+        shutil.copytree(current_filepath, invalid_data_path)
         shutil.rmtree(current_filepath)
         shutil.copytree(previous_filepath, current_filepath)
     except:
