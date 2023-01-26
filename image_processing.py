@@ -36,7 +36,7 @@ def compare_contours_for_sort(contour):
 
 def filter_contours(contour):
     x, y, w, h = cv2.boundingRect(contour)
-    return w <= 10 and h <= 10
+    return w <= 15 and h <= 15
 
 
 def get_gpv_matrix(contours, image):
@@ -46,7 +46,7 @@ def get_gpv_matrix(contours, image):
     i = 0
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
-        cropped = image[y : y + 10, x : x + 10]
+        cropped = image[y : y + 15, x : x + 15]
         color = (
             "g"
             if is_green(list(cropped[0][0]))
@@ -90,5 +90,5 @@ if __name__ == "__main__":
     filepath = "/".join(
         [get_newest_folder(constants.website_url), constants.local_image]
     )
-    # process_image(filepath)
-    process_image('tests/original.png')
+    process_image(filepath)
+    # process_image('tests/original.png')
