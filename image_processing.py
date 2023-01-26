@@ -15,14 +15,12 @@ def process_image(filepath):
     save_detected_image(detected_image, filepath)
     if not is_matrix_valid:
         use_previous_matrix()
-        return False
     else:
         save_gpv_matrix(matrix, filepath)
-        return True
 
 
 def get_contours(image):
-    ret, thresh_value = cv2.threshold(image, 110, 255, cv2.THRESH_BINARY_INV)
+    ret, thresh_value = cv2.threshold(image, 100, 255, cv2.THRESH_BINARY_INV)
     kernel = np.ones((5,5), np.uint8)
     dilated_value = cv2.dilate(thresh_value, kernel, iterations=1)
     contours, hierarchy = cv2.findContours(
@@ -38,7 +36,7 @@ def compare_contours_for_sort(contour):
 
 def filter_contours(contour):
     x, y, w, h = cv2.boundingRect(contour)
-    return w <= 8 and h <= 8
+    return w <= 10 and h <= 10
 
 
 def get_gpv_matrix(contours, image):
@@ -48,7 +46,7 @@ def get_gpv_matrix(contours, image):
     i = 0
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
-        cropped = image[y : y + 8, x : x + 8]
+        cropped = image[y : y + 10, x : x + 10]
         color = (
             "g"
             if is_green(list(cropped[0][0]))

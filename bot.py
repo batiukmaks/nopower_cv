@@ -63,11 +63,22 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         "</pre>\n\n"
         f"<pre>context.chat_data = {html.escape(str(context.chat_data))}</pre>\n\n"
         f"<pre>context.user_data = {html.escape(str(context.user_data))}</pre>\n\n"
+    )
+    message_error = (
         f"<pre>{html.escape(tb_string)}</pre>"
     )
+
+    is_single_message = len(message + "\n" + message_error) < 4096
+    if is_single_message:
+        message += "\n" + message_error
     await context.bot.send_message(
         chat_id=config.DEVELOPER_CHAT_ID, text=message, parse_mode=ParseMode.HTML
     )
+    if not is_single_message:
+        await context.bot.send_message(
+            chat_id=config.DEVELOPER_CHAT_ID, text=message_error, parse_mode=ParseMode.HTML
+        )
+
 
 
 async def show_menu(update: Update, menu):
@@ -159,7 +170,7 @@ async def send_gpv_group_info(update: Update, group: int):
         message = await update.get_bot().send_photo(
             chat_id=config.DEVELOPER_CHAT_ID,
             photo=open(
-                get_newest_folder(constants.website_url) + "/unable_to_process/detected_table_image.jpg"
+                get_newest_folder(constants.website_url) + "/unable_to_process/detected_table_image.jpg", "rb"
             ),
         )
         await message.pin()

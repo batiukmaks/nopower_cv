@@ -48,15 +48,14 @@ def use_previous_matrix():
 
     try:
         invalid_data_path = current_filepath + "/unable_to_process"
-        files = os.listdir(previous_filepath)
-        if not os.path.exists(invalid_data_path):
-            os.mkdir(invalid_data_path)
-        else:
+        if os.path.exists(invalid_data_path):
             shutil.rmtree(invalid_data_path)
         shutil.copytree(current_filepath, invalid_data_path)
-        shutil.rmtree(current_filepath)
-        shutil.copytree(previous_filepath, current_filepath)
-    except:
+
+        files = list(filter(lambda path: path.find('.') != -1, os.listdir(previous_filepath)))
+        for file in files:
+            shutil.copy(previous_filepath + "/" + file, current_filepath)
+    except shutil.Error as err:
         pass
 
     with open(current_filepath + '/using_previous.txt', 'w') as file:
