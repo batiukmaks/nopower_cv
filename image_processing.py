@@ -6,6 +6,7 @@ import constants
 
 
 def process_image(filepath):
+    return
     original_image = cv2.imread(filepath, 0)
     detected_image = cv2.imread(filepath)
     

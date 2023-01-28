@@ -5,3 +5,4 @@ local_image = "original.png"
 gpv_table = "table.csv"
 GROUPS = 18
 HOURS = 24
+local_html_file = 'page.html'
