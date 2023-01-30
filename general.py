@@ -1,13 +1,25 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
-import shutil
 import pytz
 import constants
+from data_retrieving import get_processed_data
 
 
-def get_newest_folder(url):
+def get_folder_with_latest_data():
+    time_folder = get_newest_folder()
+    if not os.path.exists(time_folder):
+        os.makedirs(time_folder)
+        get_processed_data(time_folder)
+    return time_folder
+
+
+def get_newest_folder():
     return "/".join(
-        [constants.general_folder, get_current_date(), get_last_updated_time(url)]
+        [
+            constants.general_folder,
+            get_current_date(),
+            get_last_updated_time(constants.website_url),
+        ]
     )
 
 
@@ -17,46 +29,8 @@ def get_current_date() -> str:
     return date
 
 
-# Parse last updated time from dynamic website
-# def get_last_updated_time(url) -> str:
-#     client = ScrapingAntClient(token=os.environ.get('ScrapingAntClient_token'))
-#     page_content = client.general_request(url).content
-#     soup = BeautifulSoup(page_content, "html.parser")
-#     hour, minute = soup.find(id="time-section").get_text().split(":")
-#     Kyiv_time = f"{(int(hour)+2)%24:02}{minute}"
-#     return Kyiv_time
-
-
 def get_last_updated_time(url) -> str:
     now = datetime.now(pytz.timezone("Europe/Kyiv"))
     hour, minute = [int(s) for s in now.strftime("%H %M").split()]
     minute = 0 if minute < 30 else 30
     return f"{hour:02}{minute:02}"
-
-
-def use_previous_matrix():
-    current_filepath = get_newest_folder(constants.website_url)
-
-    previous_date = current_date = datetime.strptime(' '.join(current_filepath.split('/')[-2:]), '%d%m%Y %H%M')
-    previous_filepath = ''
-    while True:
-        previous_date = current_date - timedelta(minutes=30)
-        previous_filepath = '/'.join([constants.general_folder, previous_date.strftime('%d%m%Y/%H%M')])
-        if os.path.exists(previous_filepath):
-            break
-        current_date = previous_date
-
-    try:
-        invalid_data_path = current_filepath + "/unable_to_process"
-        if os.path.exists(invalid_data_path):
-            shutil.rmtree(invalid_data_path)
-        shutil.copytree(current_filepath, invalid_data_path)
-
-        files = list(filter(lambda path: path.find('.') != -1, os.listdir(previous_filepath)))
-        for file in files:
-            shutil.copy(previous_filepath + "/" + file, current_filepath)
-    except shutil.Error as err:
-        pass
-
-    with open(current_filepath + '/using_previous.txt', 'w') as file:
-        file.write('This file is created to inform that current image on the website is invalid and/or we cannot create a valid matrix.')

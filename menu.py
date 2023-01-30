@@ -16,12 +16,13 @@ def get_choose_gpv_group_menu():
                 for j in range(1, cgm_cols + 1)
             ]
             for i in range(cgm_rows)
-        ] + [[InlineKeyboardButton("Назад", callback_data="to_main")]],
+        ]
+        + [[InlineKeyboardButton("Назад", callback_data="to_main")]],
         "text": "\n".join(
             [
                 "⚡️ Обери групу відключень ⚡️\n",
                 "Якщо ще не знаєш своєї групи, знайди її на <a href='https://oblenergo.cv.ua/shutdowns-search/'>сайті ЧернівціОблЕнерго</a> 👈",
-                ""
+                "",
             ]
         ),
     }
@@ -61,4 +62,3 @@ def get_main_menu(context: ContextTypes.DEFAULT_TYPE):
         if "gpv_group" in context.user_data
         else get_main_menu_not_chosen_group()
     )
-    
