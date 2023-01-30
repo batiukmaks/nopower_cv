@@ -52,15 +52,59 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
     file = StringIO(message)
     file.name = f"logs.txt"
-    await context.bot.send_document(
-        chat_id=config.DEVELOPER_CHAT_ID,
-        document=file,
-        caption="\n".join(
+    try:
+        caption = "\n".join(
             [
                 f"📍 error: {tb_list[-1].rstrip()}",
                 f"📍 chat_id: {update.message.chat.id if update.callback_query is None else update.callback_query.message.chat_id}",
                 f"📍 full name: {update.message.chat.full_name if update.callback_query is None else update.callback_query.message.chat.full_name}",
                 f"📍 username: @{update.message.chat.username if update.callback_query is None else update.callback_query.message.chat.username}",
             ]
-        ),
+        )
+    except:
+        caption = f"📍 error: {tb_list[-1].rstrip()}"
+    await context.bot.send_document(
+        chat_id=config.DEVELOPER_CHAT_ID, document=file, caption=caption
+    )
+
+
+from datetime import datetime
+import pytz
+
+
+async def send_stats(context: ContextTypes.DEFAULT_TYPE):
+    start_time = context.bot_data["start_time"].strftime("%d.%m.%y %H:%M:%S")
+    now = datetime.now(pytz.timezone("Europe/Kyiv"))
+    time_delta = now - context.bot_data["start_time"]
+    now = now.strftime("%d.%m.%y %H:%M:%S")
+
+    message = "\n".join(
+        [
+            f"Application startup time: {start_time}",
+            f"Current time: {now}",
+            f"Time delta: {time_delta}\n",
+            f"Number of uses: {len(context.bot_data['logger'])}",
+            f"\nUsers:",
+            f"Empty list"
+            if len(context.bot_data["logger"]) == 0
+            else "\n".join(
+                [
+                    f"{id} | {full_name} | @{username}"
+                    for id, full_name, username in context.bot_data["logger"]
+                ]
+            ),
+        ]
+    )
+    caption = "\n".join(
+        [
+            f"Current time: {now}",
+            f"Time delta: {time_delta}\n",
+            f"Number of uses: {len(context.bot_data['logger'])}",
+        ]
+    )
+
+    file = StringIO(message)
+    file.name = f"stats_{now}.txt"
+    await context.bot.send_document(
+        config.ADMIN_CHAT_ID, document=file, caption=caption
     )

@@ -8,12 +8,16 @@ from telegram.ext import (
     ContextTypes,
     MessageHandler,
     filters,
+    JobQueue,
 )
+from datetime import datetime, timedelta
+import pytz
 from data_management import get_nopower_ranges, get_gpv_for_group
 from menu import get_choose_gpv_group_menu, get_main_menu_chosen_group, get_main_menu
-import error_handler
+import logging_management
 import text
 import config
+
 
 PORT = int(os.environ.get("PORT", 5000))
 
@@ -123,10 +127,14 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/help",
     ] or query.data.startswith("gpv_group_choice_"):
         await show_menu(query, get_main_menu(context))
+    add_user_to_stats(query, context)
 
 
-async def get_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(update.message.chat_id)
+async def send_stats_manually(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message.chat_id != config.ADMIN_CHAT_ID:
+        await not_commands_handler(update, context)
+    else:
+        await logging_management.send_stats(context)
 
 
 async def show_menu(update: Update, menu):
@@ -135,6 +143,16 @@ async def show_menu(update: Update, menu):
         reply_markup=InlineKeyboardMarkup(menu["menu"]),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
+    )
+
+
+def add_user_to_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.bot_data["logger"].add(
+        (
+            update.message.chat.id,
+            update.message.chat.full_name,
+            update.message.chat.username,
+        )
     )
 
 
@@ -147,11 +165,18 @@ def main():
     application.add_handler(CommandHandler("help", help))
     application.add_handler(CommandHandler("info", send_bot_info))
     application.add_handler(CommandHandler("report", report))
-    application.add_handler(CommandHandler("chat_id", get_chat_id))
+    application.add_handler(CommandHandler("stats", send_stats_manually))
     application.add_handler(CallbackQueryHandler(callback_handler))
     application.add_handler(MessageHandler(~filters.COMMAND, not_commands_handler))
-    application.add_error_handler(error_handler.error_handler)
+    application.add_error_handler(logging_management.error_handler)
 
+    job_queue = JobQueue()
+    job_queue.set_application(application)
+    job_queue.run_repeating(logging_management.send_stats, timedelta(hours=6))
+    application.bot_data["logger"] = set()
+    application.bot_data["start_time"] = datetime.now(pytz.timezone("Europe/Kyiv"))
+
+    job_queue.scheduler.start()
     application.run_polling()
 
     application.run_webhook(
