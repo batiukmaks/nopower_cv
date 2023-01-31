@@ -1,5 +1,5 @@
 import os
-from telegram import InlineKeyboardMarkup, Update
+from telegram import InlineKeyboardMarkup, Update, error
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
@@ -124,7 +124,11 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == "/report":
         await report(query, context)
 
-    await query.delete_message()
+    try:
+        await query.delete_message()
+    except error.BadRequest:
+        # A message can only be deleted if it was sent less than 48 hours ago.
+        pass    
 
     if query.data in [
         "/start",
