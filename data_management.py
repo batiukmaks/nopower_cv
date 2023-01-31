@@ -13,23 +13,24 @@ def get_gpv_for_group(group):
 
 
 def get_nopower_ranges(group_gpv):
-    group_gpv = group_gpv[-constants.HOURS:]
+    group_gpv = group_gpv[-constants.HOURS :]
+    status_hours = list(zip(group_gpv, range(0, constants.HOURS)))
     nopower = sorted(
         [
-            x[1]
+            x
             for x in list(
                 filter(
-                    lambda x: x[0] == "r",
-                    list(zip(group_gpv, range(0, constants.HOURS))),
+                    lambda x: x[0] in ["r", "m"],
+                    status_hours,
                 )
             )
-        ]
+        ],
+        key=lambda x: x[1],
     )
-    ranges = [[nopower[0]]]
+    ranges = [[nopower[0][0], nopower[0][1]]]
     for i in range(1, len(nopower)):
-        if nopower[i - 1] != nopower[i] - 1:
-            ranges[-1].append((nopower[i - 1] + 1) % 24)
-            ranges.append([nopower[i]])
-    ranges[-1].append((nopower[-1] + 1) % 24)
+        if nopower[i - 1][1] != nopower[i][1] - 1 or nopower[i - 1][0] != nopower[i][0]:
+            ranges[-1].append((nopower[i - 1][1] + 1) % 24)
+            ranges.append([nopower[i][0], nopower[i][1]])
+    ranges[-1].append((nopower[-1][1] + 1) % 24)
     return ranges
-    

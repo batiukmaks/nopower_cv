@@ -58,7 +58,12 @@ async def send_gpv_group_info(update: Update, group: int):
             f"💡 Ви обрали групу №{group}",
             "🕑 Згідно з <a href='https://oblenergo.cv.ua/shutdowns/'>графіком</a>, сьогодні у вас не буде світла в такі години:\n",
         ]
-        + [f"📍 {start:02}:00 - {end:02}:00" for start, end in nopower]
+        + [f"{'📍' if status == 'r' else '🔸'} {start:02}:00 - {end:02}:00" for status, start, end in nopower]
+        + ["\n".join([
+            "\n📎 Позначення:",
+            "📍 - Світло відсутнє.",
+            "🔸 - Світло можливо відсутнє.",
+        ])]
     )
 
     await update.message.reply_photo(

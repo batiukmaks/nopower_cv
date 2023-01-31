@@ -19,10 +19,10 @@ def retrieve_table(filepath):
     i = 0
     with open(filepath, "r") as file:
         for line in file.read().replace(" ", "").split("\n"):
-            occurences = re.findall(">[вз]<", line)
+            occurences = re.findall(">(в|з|мз)<", line)
             for occurence in occurences:
                 matrix[i // constants.HOURS][i % constants.HOURS] = (
-                    "g" if occurence[1] == "з" else "r" if occurence[1] == "в" else "u"
+                    "g" if occurence == "з" else "r" if occurence == "в" else "m" if occurence == "мз" else "u"
                 )
                 i += 1
     return matrix
