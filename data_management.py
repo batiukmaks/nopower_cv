@@ -1,15 +1,20 @@
 import csv
 import constants
-from general import get_folder_with_latest_data
+from general import get_folder_with_latest_valid_data
 
 
 def get_gpv_for_group(group):
-    newest_folder = get_folder_with_latest_data()
-    filepath = "/".join([newest_folder, constants.gpv_table])
+    last_valid_folder, is_latest = get_folder_with_latest_valid_data()
+    filepath = "/".join([last_valid_folder, constants.gpv_table])
 
-    with open(filepath, "r") as csvfile:
-        reader = csv.reader(csvfile)
-        return [row for i, row in enumerate(reader) if i == int(group) - 1][0]
+    gpv = None
+    try:
+        with open(filepath, "r") as csvfile:
+            reader = csv.reader(csvfile)
+            gpv = [row for i, row in enumerate(reader) if i == int(group) - 1][0]
+    except FileNotFoundError:
+        gpv = None
+    return (gpv, is_latest)
 
 
 def get_nopower_ranges(group_gpv):

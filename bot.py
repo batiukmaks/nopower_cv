@@ -51,26 +51,27 @@ async def send_my_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def send_gpv_group_info(update: Update, group: int):
-    gpv = get_gpv_for_group(group)
-    nopower = get_nopower_ranges(gpv)
-    text = "\n".join(
-        [
-            f"💡 Ви обрали групу №{group}",
-            "🕑 Згідно з <a href='https://oblenergo.cv.ua/shutdowns/'>графіком</a>, сьогодні у вас не буде світла в такі години:\n",
-        ]
-        + [f"{'📍' if status == 'r' else '🔸'} {start:02}:00 - {end:02}:00" for status, start, end in nopower]
-        + ["\n".join([
-            "\n📎 Позначення:",
-            "📍 - Світло відсутнє.",
-            "🔸 - Світло можливо відсутнє.",
-        ])]
-    )
+    gpv, is_latest_data = get_gpv_for_group(group)
+    if gpv is None:
+        await update.message.reply_photo(
+            open("assets/issues.jpg", "rb"),
+            caption=text.invalid_table_provided,
+            parse_mode=ParseMode.HTML
+        )
+    else:
+        nopower = get_nopower_ranges(gpv)
+        caption = text.gpv_info(group, nopower)
+        if not is_latest_data:
+            caption += text.using_previous_table
+        await update.message.reply_photo(
+            open("assets/ligthbulb_ukraine.jpeg", "rb"),
+            caption=caption,
+            parse_mode=ParseMode.HTML,
+        )
 
-    await update.message.reply_photo(
-        open("assets/ligthbulb_ukraine.jpeg", "rb"),
-        caption=text,
-        parse_mode=ParseMode.HTML,
-    )
+    if gpv is None or not is_latest_data:
+        await show_menu(update, get_main_menu_chosen_group())
+        raise Exception('Table is invalid.')
 
 
 async def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -128,7 +129,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.delete_message()
     except error.BadRequest:
         # A message can only be deleted if it was sent less than 48 hours ago.
-        pass    
+        pass
 
     if query.data in [
         "/start",
@@ -181,7 +182,7 @@ def main():
 
     job_queue = JobQueue()
     job_queue.set_application(application)
-    job_queue.run_repeating(logging_management.send_stats, timedelta(hours=6))
+    job_queue.run_repeating(logging_management.send_stats, timedelta(hours=4))
     application.bot_data["logger"] = set()
     application.bot_data["start_time"] = datetime.now(pytz.timezone("Europe/Kyiv"))
 

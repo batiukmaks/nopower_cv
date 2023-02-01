@@ -1,16 +1,21 @@
 from datetime import datetime
 import os
+import shutil
 import pytz
 import constants
 from data_retrieving import get_processed_data
 
 
-def get_folder_with_latest_data():
-    time_folder = get_newest_folder()
-    if not os.path.exists(time_folder):
-        os.makedirs(time_folder)
-        get_processed_data(time_folder)
-    return time_folder
+def get_folder_with_latest_valid_data():
+    is_latest = True
+    valid_folder = latest_time_folder = get_newest_folder()
+    if not os.path.exists(latest_time_folder):
+        os.makedirs(latest_time_folder)
+        valid_folder = get_processed_data(latest_time_folder)
+    if valid_folder != latest_time_folder:
+        shutil.rmtree(latest_time_folder)
+        is_latest = False
+    return (valid_folder, is_latest)
 
 
 def get_newest_folder():
