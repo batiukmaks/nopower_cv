@@ -99,7 +99,9 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def not_commands_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if (
+    if update.message.pinned_message:
+        pass
+    elif (
         "is_report_active" in context.user_data
         and context.user_data["is_report_active"]
     ):
