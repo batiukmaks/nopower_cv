@@ -104,6 +104,8 @@ async def not_commands_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         and context.user_data["is_report_active"]
     ):
         await report(update, context)
+    elif "Слава Україні" in update.message.text:
+        await update.message.reply_text('🇺🇦 Героям слава 🇺🇦')
     elif not update.message.from_user.is_bot:
         await update.message.reply_text("🆘 Для допомоги введіть /help")
 
