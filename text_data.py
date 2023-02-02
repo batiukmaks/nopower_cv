@@ -22,7 +22,8 @@ def retrieve_table(filepath):
             occurences = re.findall(">(в|з|мз)<", line)
             for occurence in occurences:
                 matrix[i // constants.HOURS][i % constants.HOURS] = (
-                    "g" if occurence == "з" else "r" if occurence == "в" else "m" if occurence == "мз" else "u"
+                    # "g" if occurence == "з" else "r" if occurence == "в" else "m" if occurence == "мз" else "u"
+                    "g" if occurence == "з" else "r" if occurence == "в" else "r" if occurence == "мз" else "u"
                 )
                 i += 1
     return matrix
