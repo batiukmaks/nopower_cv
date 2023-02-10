@@ -10,8 +10,18 @@ def get_processed_data(folder):
     get_text_data(folder)
     is_table_valid = check_table_validity(folder)
     if not is_table_valid:
-        return get_last_valid_folder(folder)
+        folder = get_last_valid_folder(folder)
     return folder
+
+
+def check_emergency_shutdowns(folder):
+    count = 0
+    try:
+        with open(f'{folder}/{constants.local_html_file}', 'r') as file:
+            count = file.read().count('img')
+    except FileNotFoundError:
+        count = 4
+    return count == 4
 
 
 def get_image_data(folder):

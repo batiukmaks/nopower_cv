@@ -3,7 +3,7 @@ import os
 import shutil
 import pytz
 import constants
-from data_retrieving import get_processed_data
+from data_retrieving import get_processed_data, check_emergency_shutdowns
 
 
 def get_folder_with_latest_valid_data():
@@ -15,7 +15,8 @@ def get_folder_with_latest_valid_data():
     if valid_folder != latest_time_folder:
         shutil.rmtree(latest_time_folder)
         is_latest = False
-    return (valid_folder, is_latest)
+    is_emergency_shutdowns = check_emergency_shutdowns(valid_folder)
+    return (valid_folder, is_latest, is_emergency_shutdowns)
 
 
 def get_newest_folder():

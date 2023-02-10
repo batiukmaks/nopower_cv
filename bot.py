@@ -51,8 +51,14 @@ async def send_my_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def send_gpv_group_info(update: Update, group: int):
-    gpv, is_latest_data = get_gpv_for_group(group)
-    if gpv is None:
+    gpv, is_latest_data, is_emergency_shutdowns = get_gpv_for_group(group)
+    if gpv is None and is_emergency_shutdowns:
+        await update.message.reply_photo(
+            open("assets/emergency_shutdowns.jpg", "rb"),
+            caption=text.emergency_shutdowns,
+            parse_mode=ParseMode.HTML
+        )
+    elif gpv is None:
         await update.message.reply_photo(
             open("assets/issues.jpg", "rb"),
             caption=text.invalid_table_provided,
@@ -69,7 +75,7 @@ async def send_gpv_group_info(update: Update, group: int):
             parse_mode=ParseMode.HTML,
         )
 
-    if gpv is None or not is_latest_data:
+    if not is_emergency_shutdowns and (gpv is None or not is_latest_data):
         await show_menu(update, get_main_menu_chosen_group())
         raise Exception('Table is invalid.')
 

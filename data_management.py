@@ -4,7 +4,7 @@ from general import get_folder_with_latest_valid_data
 
 
 def get_gpv_for_group(group):
-    last_valid_folder, is_latest = get_folder_with_latest_valid_data()
+    last_valid_folder, is_latest, is_emergency_shutdowns = get_folder_with_latest_valid_data()
     filepath = "/".join([last_valid_folder, constants.gpv_table])
 
     gpv = None
@@ -14,7 +14,7 @@ def get_gpv_for_group(group):
             gpv = [row for i, row in enumerate(reader) if i == int(group) - 1][0]
     except FileNotFoundError:
         gpv = None
-    return (gpv, is_latest)
+    return (gpv, is_latest, is_emergency_shutdowns)
 
 
 def get_nopower_ranges(group_gpv):
