@@ -66,7 +66,7 @@ async def send_gpv_group_info(update: Update, group: int):
         )
     else:
         nopower = get_nopower_ranges(gpv)
-        caption = text.gpv_info(group, nopower)
+        caption = text.gpv_info(group, nopower) if len(nopower) else text.gpv_info_all_green(group)
         if not is_latest_data:
             caption += text.using_previous_table
         await update.message.reply_photo(

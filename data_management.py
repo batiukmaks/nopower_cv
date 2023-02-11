@@ -32,6 +32,8 @@ def get_nopower_ranges(group_gpv):
         ],
         key=lambda x: x[1],
     )
+    if len(nopower) == 0:
+        return []
     ranges = [[nopower[0][0], nopower[0][1]]]
     for i in range(1, len(nopower)):
         if nopower[i - 1][1] != nopower[i][1] - 1 or nopower[i - 1][0] != nopower[i][0]:
